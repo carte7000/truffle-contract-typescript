@@ -1,13 +1,16 @@
-// import * as data from './abi.json';
+#!/usr/bin/env node
+
 import { W3 } from './W3';
 const path = require('path');
 
 import { FunctionFactory } from './functions/functionFactory';
+import { EventFactory } from './events/eventFactory';
 import { assets } from './assets/web3Contract';
 
 class AbiParser {
 
     private functionFactory = new FunctionFactory();
+    private eventFactory = new EventFactory();
 
     private _getBaseClass(abi: any) {
         return abi.networks == {} ? 'Web3Contract' : 'StaticWeb3Contract';
@@ -17,13 +20,19 @@ class AbiParser {
 
         const myAbi = abi as {
             contractName: string,
-            abi: W3.ABIDefinition[]
+            abi: W3.ABIDefinition[],
+            networks: {},
         }
+
+        const contractName = abi.contractName;
+        const abiProp = abi.abi;
+        const networks = abi.networks;
+
 
         let contract = `
             export class ${myAbi.contractName} extends ${this._getBaseClass(abi)} {    
                 constructor() {
-                    const abi = ${JSON.stringify(abi).replace(/\s/g, '')};
+                    const abi = ${JSON.stringify({contractName, networks, abi: abiProp}).replace(/\s/g, '')};
                     super(abi)    
                 }
         `
@@ -32,6 +41,8 @@ class AbiParser {
             switch (prop.type) {
                 case 'function':
                     contract += this.functionFactory.generateFunction(prop);
+                case 'event':
+                    contract += this.eventFactory.generateEvent(prop);
                 default:
             }
         }
@@ -71,7 +82,7 @@ program
     .description('Transpile file or folder')
     .action((file: any, output: any) => {
         const stat = fs.lstatSync(file);
-        fs.appendFile(output, assets, function (err: any) {
+        fs.writeFile(output, assets, function (err: any) {
             if (stat.isDirectory()) {
                 fs.readdir(file, (err: any, files: any) => {
                     files.forEach((subFile: any) => {

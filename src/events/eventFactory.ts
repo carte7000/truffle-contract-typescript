@@ -10,13 +10,23 @@ export class EventFactory {
     private argumentFactory = new ArgumentFactory();
 
     public generateEvent(eventAbi: W3.ABIDefinition) {
-        // const outputType = functionAbi.outputs && Array.isArray(functionAbi.outputs) && functionAbi.outputs.length > 0 ? this.typeConverter.getType(functionAbi.outputs[0].type) : 'void';
-        // const result = `
-        //     public async ${functionAbi.name}${this.parameterFactory.getParameters(functionAbi)}: Promise<${outputType}> {
-        //         const instance = await this._getInstance();
-        //         return await instance.${functionAbi.name}.call(${this.argumentFactory.getParams(functionAbi)});
-        //     }
-        // `
-        // return result;
+        const inputs = eventAbi.inputs && Array.isArray(eventAbi.inputs) ? eventAbi.inputs : [];
+        const params = inputs.map((input) => { return `${input.name}: ${this.typeConverter.getType(input.type)}`});
+        const result = 
+        `
+            private _${eventAbi.name}Watcher = {
+                watch: async (cb: (args: {${params.join(';')}}) => void) => {
+                    const instance = await this._getInstance();
+                    instance.${eventAbi.name}('latest').watch((error: Error, result: any) => {
+                        cb(result.args);
+                    });
+                }
+            }
+
+            public get ${eventAbi.name}() {
+                return this._${eventAbi.name}Watcher;
+            }
+        `;
+        return result;
     }
 } 
