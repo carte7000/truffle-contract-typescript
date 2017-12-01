@@ -1,0 +1,21 @@
+{
+    "name": "truffle-contract-typescript",
+    "version": "1.0.0",
+    "description": "",
+    "bin": {
+        "truffle-contract-typescript": "build/app.js"
+    },
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "files": [
+        "build/**/*.*"
+    ],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "commander": "^2.12.2",
+        "typescript": "^2.5.3"
+    }
+}
