@@ -534,6 +534,7 @@ export abstract class StaticWeb3Contract {
     }
 
     protected _getInstance(): Promise<any> {
+        this.init();
         if (!this._instance) {
             this._instance = this.contract.deployed();
         }
@@ -572,6 +573,7 @@ export abstract class Web3Contract {
     }
 
     protected _getInstance(): Promise<any> {
+        this.init();
         if (!this._instance) {
             this._instance = this.contract.at(this.at);
         }
