@@ -32,17 +32,37 @@ class AbiParser {
         let contract = `
             export class ${myAbi.contractName} extends ${this._getBaseClass(abi)} {    
                 constructor() {
-                    const abi = ${JSON.stringify({contractName, networks, abi: abiProp}).replace(/\s/g, '')};
-                    super(abi)    
+                    super(${JSON.stringify({contractName, networks, abi: abiProp}).replace(/\s/g, '')})    
                 }
         `
 
-        for (const prop of myAbi.abi) {
-            switch (prop.type) {
+        const filteredAbi = myAbi.abi.filter(x => x.name && !x.name.startsWith('__'));
+        
+        const grouped = Array.from(filteredAbi.map(element => {
+            return {
+                name: element.name,
+                type: element.type,
+                items: [element]
+            }
+        }).reduce((prev, current) => {
+            const key = current.name + '_' + current.type;
+            if(!prev.has(key)) {
+                prev.set(key, {name: current.name, type: current.type, items: []});
+            }
+            const old = prev.get(key);
+            old.items.push(...current.items);
+            prev.set(key, old);
+            return prev;
+        }, new Map()).values());
+        console.log(grouped);
+        for (const prop of grouped) {
+            console.log(prop);
+            const val = prop;
+            switch (val.type) {
                 case 'function':
-                    contract += this.functionFactory.generateFunction(prop);
+                    contract += this.functionFactory.generateFunction(prop.items);
                 case 'event':
-                    contract += this.eventFactory.generateEvent(prop);
+                    contract += this.eventFactory.generateEvent(prop.items);
                 default:
             }
         }

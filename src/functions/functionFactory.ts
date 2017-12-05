@@ -13,12 +13,40 @@ export class FunctionFactory {
         return functionAbi.constant ? `.call` : '';
     }
 
-    public generateFunction(functionAbi: W3.ABIDefinition) {
-        const outputType = functionAbi.outputs && Array.isArray(functionAbi.outputs) && functionAbi.outputs.length > 0 ? this.typeConverter.getType(functionAbi.outputs[0].type) : 'void';
+    private getOutputType(functionAbi: W3.ABIDefinition) {
+        return functionAbi.outputs && Array.isArray(functionAbi.outputs) && functionAbi.outputs.length > 0 ? this.typeConverter.getType(functionAbi.outputs[0].type) : 'void';
+    }
+
+    public generateFunction(functionAbi: W3.ABIDefinition[]) {
+        const name = functionAbi[0].name;
+        const outputTypes = Array.from(functionAbi.map(x => this.getOutputType(x)).reduce((prev, current) => {
+            prev.add(current);
+            return prev;
+        }, new Set()));
+
+        const parameters = functionAbi.map(abi => this.parameterFactory.getParameters(abi));
+
+        const guards = functionAbi.length === 1 ? [] : functionAbi.map((abi, index) => this.parameterFactory.getGuards(abi, name+'Guard'+index));
+
+        const calls = functionAbi.length === 1 ? [`return await instance.${name}${this.wayToCall(functionAbi[0])}(${this.argumentFactory.getParams(functionAbi[0])})`] : functionAbi.map((abi, index) => {           
+            return `
+                if(this.$${name+'Guard'+index}(params)) {
+                    return await instance.${name}${this.wayToCall(abi)}(${this.argumentFactory.getParams(abi)})
+                }
+            `;
+        })
+
+        if(functionAbi.length !== 1) {
+            calls.push('return null');
+        }
+
         const result = `
-            public async ${functionAbi.name}${this.parameterFactory.getParameters(functionAbi)}: Promise<${outputType}> {
+
+            ${guards.join('\n')}
+
+            public async ${name}(params: ${parameters.join(' | ')}): Promise<${outputTypes.join(' | ')} | null> {
                 const instance = await this._getInstance();
-                return await instance.${functionAbi.name}${this.wayToCall(functionAbi)}(${this.argumentFactory.getParams(functionAbi)});
+                ${calls.join('\n')}
             }
         `
         return result;

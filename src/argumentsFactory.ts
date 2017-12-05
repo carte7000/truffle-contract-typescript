@@ -8,11 +8,11 @@ export class ArgumentFactory {
     public getParams(functionAbi: W3.ABIDefinition) {
         const params = [];
         if (functionAbi.inputs && Array.isArray(functionAbi.inputs)) {
-            params.push(...functionAbi.inputs.map(input => `${input.name}`));
+            params.push(...functionAbi.inputs.map((input, index) => `params.${input.name || 'param' + index}`));
         }
 
         if (this.requireAddress(functionAbi)) {
-            params.push('{ from: senderAddress }');
+            params.push('{ from: params.senderAddress }');
         }
 
         return `${params.join(', ')}`;

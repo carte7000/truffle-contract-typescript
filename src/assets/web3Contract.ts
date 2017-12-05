@@ -521,7 +521,7 @@ const web3 = window['web3'];
 
 export abstract class StaticWeb3Contract {
     private contract: any;
-    protected web3: Web3 = web3;
+    protected web3 = web3;
 
     private _instance: Promise<any>;
 
@@ -539,11 +539,27 @@ export abstract class StaticWeb3Contract {
         }
         return this._instance;
     }
+
+    public async $getBalance(id: string) {
+        return await new Promise((resolve, reject) => {
+            this.web3.eth.getBalance(id, (error: Error, result: string) => {
+                if (error) {
+                    reject(error);
+                }
+
+                resolve(this.divideByQuintillion(Number(result)));
+            });
+        });
+    }
+
+    private divideByQuintillion(num: number) {
+        return num / 1000 / 1000 / 1000 / 1000 / 1000 / 1000;
+    }
 }
 
 export abstract class Web3Contract {
     private contract: any;
-    protected web3: Web3 = web3;
+    protected web3 = web3;
 
     private _instance: Promise<any>;
 
@@ -560,6 +576,22 @@ export abstract class Web3Contract {
             this._instance = this.contract.at(this.at);
         }
         return this._instance;
+    }
+
+    public async $getBalance() {
+        return await new Promise((resolve, reject) => {
+            this.web3.eth.getBalance(this.at, (error: Error, result: string) => {
+                if (error) {
+                    reject(error);
+                }
+
+                resolve(this.divideByQuintillion(Number(result)));
+            });
+        });
+    }
+
+    private divideByQuintillion(num: number) {
+        return num / 1000 / 1000 / 1000 / 1000 / 1000 / 1000;
     }
 }
 `

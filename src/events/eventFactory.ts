@@ -9,22 +9,25 @@ export class EventFactory {
     private parameterFactory = new ParameterFactory();
     private argumentFactory = new ArgumentFactory();
 
-    public generateEvent(eventAbi: W3.ABIDefinition) {
-        const inputs = eventAbi.inputs && Array.isArray(eventAbi.inputs) ? eventAbi.inputs : [];
-        const params = inputs.map((input) => { return `${input.name}: ${this.typeConverter.getType(input.type)}`});
+    public generateEvent(eventAbi: W3.ABIDefinition[]) {
+        const argsType = eventAbi.map((val, index) => {
+            const inputs = val.inputs && Array.isArray(val.inputs) ? val.inputs : [];
+            const params = inputs.map((input, index) => { return `${input.name || 'param' + index}: ${this.typeConverter.getType(input.type)}`});
+            return `{${params.join(';')}}`;
+        });
         const result = 
         `
-            private _${eventAbi.name}Watcher = {
-                watch: async (cb: (args: {${params.join(';')}}) => void) => {
+            private _${eventAbi[0].name}Watcher = {
+                watch: async (cb: (args: ${argsType.join(' | ')}) => void) => {
                     const instance = await this._getInstance();
-                    instance.${eventAbi.name}('latest').watch((error: Error, result: any) => {
+                    instance.${eventAbi[0].name}('latest').watch((error: Error, result: any) => {
                         cb(result.args);
                     });
                 }
             }
 
-            public get ${eventAbi.name}() {
-                return this._${eventAbi.name}Watcher;
+            public get ${eventAbi[0].name}Event() {
+                return this._${eventAbi[0].name}Watcher;
             }
         `;
         return result;
