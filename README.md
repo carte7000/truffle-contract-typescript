@@ -1,0 +1,1 @@
+# truffle-contract-typescript
