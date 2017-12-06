@@ -1,7 +1,7 @@
 # truffle-contract-typescript
 
-npm install truffle-contract-typescript -g
+`npm install truffle-contract-typescript -g`
 
 inside your project
 
-truffle-contract-typescript build ./path/to/contracts contracts.ts
+`truffle-contract-typescript build ./path/to/contracts contracts.ts`
